@@ -28,7 +28,7 @@ except ImportError:
 LOGGER = logging.getLogger("napari_ome_zarr.reader")
 
 METADATA_KEYS = ("name", "visible", "contrast_limits", "colormap",
-                 "metadata")
+                 "metadata", "affine")
 
 @napari_hook_implementation
 def napari_get_reader(path: PathLike) -> Optional[ReaderFunction]:
@@ -117,6 +117,12 @@ def transform(nodes: Iterator[Node]) -> Optional[ReaderFunction]:
                         for x in METADATA_KEYS:
                             if x in node.metadata:
                                 metadata[x] = node.metadata[x]
+                        if metadata.get("affine") is not None:
+                            # Channel dimension will be extracted by Napari and displayed as separate 4D layers.
+                            # Thus affine transformation must be reduced by one dimension.
+                            dim_mask = [True] * 6
+                            dim_mask[channel_axis] = False
+                            metadata["affine"] = metadata["affine"][dim_mask, :][:, dim_mask]
                     else:
                         # single channel image, so metadata just needs single items (not lists)
                         for x in METADATA_KEYS:
