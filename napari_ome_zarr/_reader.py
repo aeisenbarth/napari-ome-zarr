@@ -8,7 +8,7 @@ import logging
 import warnings
 from typing import Any, Callable, Dict, Iterator, List, Optional
 
-from vispy.color import Colormap
+from vispy.color import Colormap, get_colormap
 
 from ome_zarr.data import CHANNEL_DIMENSION
 from ome_zarr.io import parse_url
@@ -136,7 +136,7 @@ def transform(nodes: Iterator[Node]) -> Optional[ReaderFunction]:
                 cms = metadata.get("colormap", [])
                 for idx, cm in enumerate(cms):
                     if not isinstance(cm, Colormap):
-                        cms[idx] = Colormap(cm)
+                        cms[idx] = get_colormap(cm) if isinstance(cm, str) else Colormap(cm)
 
                 properties = transform_properties(node.metadata.get("properties"))
                 if properties is not None:
