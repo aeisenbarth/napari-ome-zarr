@@ -101,6 +101,17 @@ def transform(nodes: Iterator[Node]) -> Optional[ReaderFunction]:
                     for x in METADATA_KEYS:
                         if x in node.metadata:
                             metadata[x] = node.metadata[x]
+                    if len(shape) == 5: # dirty fix for issue with napari 0.4.11
+                        # a channel axis doesn't make sense in a label image
+                        # therefore it isn't extracted into separate layers.
+                        # This results in a dimensionality mismatch between image and labels
+                        # layers, which propagates through viewer.dims.points through
+                        # to layer.corner_pixels.
+                        channel_axis = 1
+                        dim_mask = [True] * 6
+                        dim_mask[channel_axis] = False
+                        metadata["affine"] = metadata["affine"][dim_mask, :][:, dim_mask]
+                        data=[d[:,0,...] for d in data]
                 else:
                     channel_axis = None
                     if "axes" in node.metadata:
